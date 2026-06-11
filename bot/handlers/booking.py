@@ -256,13 +256,33 @@ async def process_document_type(callback: CallbackQuery, state: FSMContext) -> N
 
 @router.message(BookingState.entering_document_number)
 async def process_document_number(message: Message, state: FSMContext) -> None:
-    """Validate document number and show order summary."""
+    """Validate document number and ask for email."""
     try:
         doc_number = message.text.strip()
         if len(doc_number) < 4:
             await message.answer("❌ Номер документа слишком короткий.")
             return
         await state.update_data(document_number=doc_number)
+        await state.set_state(BookingState.entering_email)
+        await message.answer(
+            "📧 Введите email для получения электронного билета:"
+        )
+    except Exception as e:
+        logger.error(f"Error in process_document_number: {e}")
+        await message.answer("⚠️ Ошибка. Попробуйте позже.")
+
+
+@router.message(BookingState.entering_email)
+async def process_email(message: Message, state: FSMContext) -> None:
+    """Validate email, create order, show summary."""
+    try:
+        email = message.text.strip().lower()
+        if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email):
+            await message.answer(
+                "❌ Некорректный email. Введите email в формате user@example.com"
+            )
+            return
+        await state.update_data(email=email)
         data = await state.get_data()
 
         # Guard against a seat taken while the user was typing.
@@ -290,15 +310,16 @@ async def process_document_number(message: Message, state: FSMContext) -> None:
                     user_id, route_id, train_number, train_name,
                     origin, destination, departure_time, arrival_time, travel_date,
                     wagon_type, wagon_number, seat_number,
-                    passenger_name, document_type, document_number, price, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    passenger_name, document_type, document_number,
+                    email, price, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 user_id, data["route_id"], data["train_number"], data["train_name"],
                 data["origin"], data["destination"],
                 data["departure_time"], data["arrival_time"], data["date"],
                 data["wagon_type"], data["wagon_number"], data["seat_number"],
                 data["passenger_name"], data["document_type"],
-                doc_number, data["price"], "pending"
+                data["document_number"], email, data["price"], "pending"
             ))
             order_id = cursor.lastrowid
             conn.commit()
@@ -314,11 +335,12 @@ async def process_document_number(message: Message, state: FSMContext) -> None:
             "🚃 " + data['wagon_type'] + ", вагон " + str(data['wagon_number']) +
             ", место " + str(data['seat_number']) + "\n"
             "👤 " + data['passenger_name'] + "\n"
-            "📄 " + data['document_type'] + " №" + doc_number + "\n"
+            "📄 " + data['document_type'] + " №" + data['document_number'] + "\n"
+            "📧 " + email + "\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "💰 <b>К оплате: " + f"{data['price']:.2f}" + " BYN</b>"
         )
         await message.answer(summary, reply_markup=get_payment_keyboard(order_id))
     except Exception as e:
-        logger.error(f"Error in process_document_number: {e}")
+        logger.error(f"Error in process_email: {e}")
         await message.answer("⚠️ Ошибка. Попробуйте позже.")

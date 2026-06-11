@@ -22,4 +22,5 @@ class Order:
     price: float
     status: str = "pending"  # pending, paid, cancelled, refunded
     transaction_id: Optional[str] = None
+    email: Optional[str] = None
     created_at: Optional[datetime] = None

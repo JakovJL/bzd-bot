@@ -33,8 +33,18 @@ class BookingState(StatesGroup):
     entering_document_type = State()
     entering_document_number = State()
 
-    # Step 8: Confirm and pay
+    # Step 8: Enter email for e-ticket
+    entering_email = State()
+
+    # Step 9: Confirm and pay
     confirming_payment = State()
+
+    # Step 10: Card entry (after clicking "Оплатить")
+    entering_card_number = State()
+    entering_card_expiry = State()
+    entering_card_cvv = State()
+    entering_card_holder = State()
+    processing_payment = State()
 
 
 class WaitlistState(StatesGroup):

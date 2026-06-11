@@ -305,6 +305,15 @@ def get_check_now_keyboard() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 
+def get_cancel_payment_keyboard() -> InlineKeyboardMarkup:
+    """Cancel button shown during card entry."""
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="❌ Отменить оплату", callback_data="cancel_payment")
+    )
+    return builder.as_markup()
+
+
 def get_waitlist_cancel_keyboard(waitlist_id: int) -> InlineKeyboardMarkup:
     """Create waitlist cancel keyboard."""
     builder = InlineKeyboardBuilder()

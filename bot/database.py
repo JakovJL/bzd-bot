@@ -158,6 +158,7 @@ class Database:
                 ("origin", "TEXT"), ("destination", "TEXT"),
                 ("departure_time", "TEXT"), ("arrival_time", "TEXT"),
                 ("travel_date", "TEXT"),
+                ("email", "TEXT"),
             ],
             "tickets": [
                 ("reminded_24h", "INTEGER DEFAULT 0"),
